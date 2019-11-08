@@ -117,7 +117,8 @@ describe('Tests', () => {
     ]
     const output = `
       import x from "some-path/x.js"
-      import z, { y } from "some-path/y.js"
+      import { y } from "some-path/y.js"
+      import z from "some-path/y.js"
 
       let a
 
@@ -175,7 +176,10 @@ describe('Tests', () => {
       members: ['y', 'z']
     }
     const output = `
-      import x, { q, y, z } from "some-path"
+      import x from "some-path"
+      import { y } from "some-path"
+      import { z } from "some-path"
+      import { q } from "some-path"
 
       let a
 
@@ -384,7 +388,9 @@ describe('Tests', () => {
       members: ['x', 'y', 'z'], path: 'some-path'
     }
     const output = `
-      import { x, y, z } from "some-path"
+      import { x } from "some-path"
+      import { y } from "some-path"
+      import { z } from "some-path"
 
       let a = x ? y : z
     `
@@ -404,7 +410,9 @@ describe('Tests', () => {
       members: ['x', 'y', 'z'], path: 'some-path'
     }
     const output = `
-      import { x, y, z } from "some-path"
+      import { x } from "some-path"
+      import { y } from "some-path"
+      import { z } from "some-path"
 
       let a = b => x
 
@@ -426,7 +434,9 @@ describe('Tests', () => {
       members: ['x', 'y', 'z'], path: 'some-path'
     }
     const output = `
-      import { x, y, z } from "some-path"
+      import { x } from "some-path"
+      import { y } from "some-path"
+      import { z } from "some-path"
 
       for (let a in x) { }
 
@@ -446,7 +456,8 @@ describe('Tests', () => {
       members: ['x', 'y', 'z'], path: 'some-path'
     }
     const output = `
-      import { x, z } from "some-path"
+      import { x } from "some-path"
+      import { z } from "some-path"
 
       new x()
       new a.y()
@@ -470,7 +481,9 @@ describe('Tests', () => {
       members: ['x', 'y', 'z'], path: 'some-path'
     }
     const output = `
-      import { x, y, z } from "some-path"
+      import { x } from "some-path"
+      import { y } from "some-path"
+      import { z } from "some-path"
 
       function a () {
         return x
@@ -493,7 +506,8 @@ describe('Tests', () => {
       members: ['x', 'y', 'z'], path: 'some-path'
     }
     const output = `
-      import { x, y } from "some-path"
+      import { x } from "some-path"
+      import { y } from "some-path"
 
       throw x
       +y
@@ -512,7 +526,8 @@ describe('Tests', () => {
       members: ['X', 'Y'], path: 'some-path'
     }
     const output = `
-      import { X, Y } from "some-path"
+      import { X } from "some-path"
+      import { Y } from "some-path"
 
       class A extends X { }
 
