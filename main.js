@@ -1,73 +1,51 @@
 /// <reference lib="esnext" />
 
-const nodePath = require('path')
+/**
+ * @param {BabelAutoImportPluginOption} option
+ * @returns {option is BabelAutoImportPluginImportFactoryOption}
+ */
+const isFactory = option => typeof option.factory === 'function'
 
 /**
- *
- * @param {BabelAutoImportPluginDeclaration} declaration
- * @param {Babel} babel
- * @param {ProgramPath} path
- * @param {any} state
- * @returns {[string, ImportDeclaration][]}
+ * @param {BabelAutoImportPluginImport} resolution
+ * @returns {resolution is BabelAutoImportPluginDefaultImport}
  */
-const evaluate = (declaration, babel, path, state) => {
+const isDefaultImport = resolution =>
+  // @ts-ignore
+  Boolean(resolution.default)
+
+/**
+ * @param {BabelAutoImportPluginImport} resolution
+ * @returns {resolution is BabelAutoImportPluginSideEffectImport}
+ */
+const isSideEffectImport = resolution =>
+  // @ts-ignore
+  Boolean(resolution.sideEffect)
+
+/**
+ * @param {import('@babel/core')} babel
+ * @param {string} id
+ * @param {BabelAutoImportPluginImport} resolution
+ * @returns {ImportDeclaration}
+ */
+function evaluate (babel, id, resolution) {
   const t = babel.types
-  const filename = state.file.opts.filename
 
-  /** @type {[string, ImportDeclaration][]} */
-  const result = []
-
-  const source = !declaration.path.includes('[name]') ? declaration.path
-    : declaration.path.replace(
-      /\[name\]/,
-      nodePath.basename(filename).replace(
-        new RegExp(declaration.nameReplacePattern || '\\.js$'),
-        declaration.nameReplaceString || ''
-      )
+  if (isDefaultImport(resolution)) {
+    return t.importDeclaration(
+      [t.importDefaultSpecifier(t.identifier(id))],
+      t.stringLiteral(resolution.from)
     )
-
-  if (declaration.default) {
-    result.push([
-      declaration.default,
-      t.importDeclaration(
-        [t.importDefaultSpecifier(t.identifier(declaration.default))],
-        t.stringLiteral(source)
-      )
-    ])
-  }
-
-  if (declaration.anonymous) {
-    result.push(...declaration.anonymous
-      .filter(anonymous => anonymous)
-      .map(
-        /** @returns {[string, ImportDeclaration]} */
-        anonymous => ([
-          anonymous,
-          t.importDeclaration([], t.stringLiteral(source))
-        ])
-      )
+  } else if (isSideEffectImport(resolution)) {
+    return t.importDeclaration([], t.stringLiteral(resolution.from)
     )
+  } else {
+    return t.importDeclaration([
+      t.importSpecifier(
+        t.identifier(id),
+        t.identifier(resolution.export || id)
+      )], t.stringLiteral(resolution.from))
   }
-
-  if (declaration.members) {
-    result.push(...declaration.members
-      .filter(member => member)
-      .map(
-        /** @returns {[string, ImportDeclaration]} */
-        member => ([
-          member,
-          t.importDeclaration([
-            t.importSpecifier(
-              t.identifier(member),
-              t.identifier(member)
-            )], t.stringLiteral(source)
-          )
-        ])
-      )
-    )
-  }
-
-  return result
 }
 
 /**
@@ -75,13 +53,28 @@ const evaluate = (declaration, babel, path, state) => {
  * @param {Babel} babel
  * @param {ProgramPath} path
  * @param {any} state
+ * @returns {IterableIterator<[string, ImportDeclaration]>}
  */
 function* resolve (babel, path, state) {
   /** @type {BabelAutoImportPluginOption} */
-  const options = state.opts
+  const factory = state.opts
 
-  for (const declaration of options.declarations) {
-    yield* evaluate(declaration, babel, path, state)
+  if (isFactory(factory)) {
+    const option = factory.factory(babel, path, state)
+
+    for (const [id, resolution] of Object.entries(option)) {
+      yield [id, evaluate(babel, id, resolution)]
+    }
+  } else {
+    const option = factory
+
+    for (const [id, resolutionFactory] of Object.entries(option)) {
+      const resolution = typeof resolutionFactory === 'function'
+        ? resolutionFactory(babel, path, state)
+        : resolutionFactory
+
+      yield [id, evaluate(babel, id, resolution)]
+    }
   }
 }
 
@@ -212,18 +205,56 @@ const plugin = function (babel) {
  */
 
 /**
- * @typedef BabelAutoImportPluginDeclaration
- * @property {string} path
- * @property {string} [default]
- * @property {string[]} [members]
- * @property {string[]} [anonymous]
- * @property {string} [nameReplacePattern]
- * @property {string} [nameReplaceString]
+ * @typedef BabelAutoImportPluginDefaultImport
+ * @property {string} from
+ * @property {true} default
  */
 
 /**
- * @typedef BabelAutoImportPluginOption
- * @property {BabelAutoImportPluginDeclaration[]} declarations
+ * @typedef BabelAutoImportPluginExportImport
+ * @property {string} from
+ * @property {string} [export]
+ */
+
+/**
+ * @typedef BabelAutoImportPluginSideEffectImport
+ * @property {string} from
+ * @property {true} sideEffect
+ */
+
+/**
+ * @typedef {BabelAutoImportPluginDefaultImport |
+ *  BabelAutoImportPluginExportImport |
+ *  BabelAutoImportPluginSideEffectImport} BabelAutoImportPluginImport
+ */
+
+/**
+ * @callback BabelAutoImportPluginImportCallback
+ * @param {Babel} babel
+ * @param {ProgramPath} path
+ * @param {any} state
+ * @returns {BabelAutoImportPluginImport}
+ */
+
+/**
+ * @callback BabelAutoImportPluginImportFactory
+ * @param {Babel} babel
+ * @param {ProgramPath} path
+ * @param {any} state
+ * @returns {{
+ *  [identifier: string]: BabelAutoImportPluginImport
+ * }}
+ */
+
+/**
+ * @typedef BabelAutoImportPluginImportFactoryOption
+ * @property {BabelAutoImportPluginImportFactory} factory
+ */
+
+/**
+ * @typedef {BabelAutoImportPluginImportFactoryOption | {
+ *  [identifier: string]: BabelAutoImportPluginImport | BabelAutoImportPluginImportCallback
+ * }} BabelAutoImportPluginOption
  */
 
 module.exports = /** @type {DefaultExportShim<BabelPlugin<any>>} */(plugin)

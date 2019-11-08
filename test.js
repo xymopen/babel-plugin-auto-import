@@ -1,15 +1,16 @@
 const { assert } = require('chai')
+const path = require('path')
 const babel = require('@babel/core')
 const plugin = require('./main.js').default
 
 /**
  * @param {string} input
  * @param {string} expected
- * @param {BabelAutoImportPluginDeclaration[]} declarations
- * @param {string} [filename]
+ * @param {BabelAutoImportPluginOption} pluginOption
+ * @param {Partial<TransformOptions>} [transformOption]
  * @returns {[string, string]}
  */
-function isEqual (input, expected, declarations, filename) {
+function isEqual (input, expected, pluginOption, transformOption) {
   /** @type {import('@babel/core').TransformOptions} */
   const babelOptions = {
     code: true,
@@ -17,18 +18,15 @@ function isEqual (input, expected, declarations, filename) {
     configFile: false,
     babelrc: false,
     babelrcRoots: undefined,
-    sourceType: 'module'
-  }
-
-  if (!babelOptions.filename) {
-    babelOptions.filename = filename || 'default.js'
+    sourceType: 'module',
+    ...transformOption
   }
 
   const output = /** @type {string} */(
     (/** @type {babel.BabelFileResult} */(
       babel.transform(input, {
         ...babelOptions,
-        plugins: [[plugin, { declarations }]]
+        plugins: [[plugin, pluginOption]]
       }))
     ).code
   )
@@ -47,9 +45,9 @@ describe('Tests', () => {
     const input = `
       someVariable
     `
-    /** @type {BabelAutoImportPluginDeclaration} */
-    const declaration = {
-      default: 'someVariable', path: 'some-path/some-module.js'
+    /** @type {BabelAutoImportPluginOption} */
+    const option = {
+      someVariable: { from: 'some-path/some-module.js', default: true }
     }
     const output = `
       import someVariable from "some-path/some-module.js"
@@ -57,7 +55,7 @@ describe('Tests', () => {
       someVariable
     `
 
-    assert.strictEqual(...isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, option))
   })
 
   it('case 2', () => {
@@ -66,9 +64,9 @@ describe('Tests', () => {
 
       someVariable
     `
-    /** @type {BabelAutoImportPluginDeclaration} */
-    const declaration = {
-      default: 'someVariable', path: 'some-path/some-module.js'
+    /** @type {BabelAutoImportPluginOption} */
+    const option = {
+      someVariable: { from: 'some-path/some-module.js', default: true }
     }
     const output = `
       import someVariable from "some-path/some-module.js"
@@ -76,16 +74,16 @@ describe('Tests', () => {
       someVariable
     `
 
-    assert.strictEqual(...isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, option))
   })
 
   it('case 3', () => {
     const input = `
       someVariable
     `
-    /** @type {BabelAutoImportPluginDeclaration} */
-    const declaration = {
-      members: ['someVariable'], path: 'some-path/some-module.js'
+    /** @type {BabelAutoImportPluginOption} */
+    const option = {
+      someVariable: { from: 'some-path/some-module.js' }
     }
     const output = `
       import { someVariable } from "some-path/some-module.js"
@@ -93,7 +91,7 @@ describe('Tests', () => {
       someVariable
     `
 
-    assert.strictEqual(...isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, option))
   })
 
   it('case 4', () => {
@@ -114,12 +112,11 @@ describe('Tests', () => {
         })()
       })()
     `
-    /** @type {BabelAutoImportPluginDeclaration} */
-    /** @type {BabelAutoImportPluginDeclaration[]} */
-    const declarations = [
-      { default: 'x', path: 'some-path/x.js' },
-      { members: ['y'], path: 'some-path/y.js' }
-    ]
+    /** @type {BabelAutoImportPluginOption} */
+    const option = {
+      x: { from: 'some-path/x.js', default: true },
+      y: { from: 'some-path/y.js' }
+    }
     const output = `
       import x from "some-path/x.js"
       import { y } from "some-path/y.js"
@@ -140,22 +137,22 @@ describe('Tests', () => {
       })()
     `
 
-    assert.strictEqual(...isEqual(input, output, declarations))
+    assert.strictEqual(...isEqual(input, output, option))
   })
 
   it('case 5', () => {
     const input = `
       let someVariable
     `
-    /** @type {BabelAutoImportPluginDeclaration} */
-    const declaration = {
-      default: 'someVariable', path: 'some-path/some-module.js'
+    /** @type {BabelAutoImportPluginOption} */
+    const option = {
+      someVariable: { from: 'some-path/some-module.js', default: true }
     }
     const output = `
       let someVariable
     `
 
-    assert.strictEqual(...isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, option))
   })
 
   it('case 6', () => {
@@ -176,11 +173,11 @@ describe('Tests', () => {
         })()
       })()
     `
-    /** @type {BabelAutoImportPluginDeclaration} */
-    const declaration = {
-      path: 'some-path',
-      default: 'x',
-      members: ['y', 'z']
+    /** @type {BabelAutoImportPluginOption} */
+    const option = {
+      x: { from: 'some-path', default: true },
+      y: { from: 'some-path' },
+      z: { from: 'some-path' }
     }
     const output = `
       import x from "some-path"
@@ -203,16 +200,18 @@ describe('Tests', () => {
       })()
     `
 
-    assert.strictEqual(...isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, option))
   })
 
   it('case 7', () => {
     const input = `
       x.y.z
     `
-    /** @type {BabelAutoImportPluginDeclaration} */
-    const declaration = {
-      members: ['x', 'y', 'z'], path: 'some-path'
+    /** @type {BabelAutoImportPluginOption} */
+    const option = {
+      x: { from: 'some-path' },
+      y: { from: 'some-path' },
+      z: { from: 'some-path' }
     }
     const output = `
       import { x } from "some-path"
@@ -220,7 +219,7 @@ describe('Tests', () => {
       x.y.z
     `
 
-    assert.strictEqual(...isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, option))
   })
 
   it('case 8', () => {
@@ -228,9 +227,9 @@ describe('Tests', () => {
       let a = x.b()
       let c = d.b()
     `
-    /** @type {BabelAutoImportPluginDeclaration} */
-    const declaration = {
-      default: 'x', path: 'some-path'
+    /** @type {BabelAutoImportPluginOption} */
+    const option = {
+      x: { from: 'some-path', default: true }
     }
     const output = `
       import x from "some-path"
@@ -239,7 +238,7 @@ describe('Tests', () => {
       let c = d.b()
     `
 
-    assert.strictEqual(...isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, option))
   })
 
   it('case 9', () => {
@@ -254,13 +253,14 @@ describe('Tests', () => {
         }
       }
     `
-    /** @type {BabelAutoImportPluginDeclaration} */
-    const declaration = {
-      members: ['x', 'y'], path: 'some-path'
+    /** @type {BabelAutoImportPluginOption} */
+    const option = {
+      x: { from: 'some-path' },
+      y: { from: 'some-path' }
     }
     const output = input
 
-    assert.strictEqual(...isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, option))
   })
 
   it('case 10', () => {
@@ -273,13 +273,16 @@ describe('Tests', () => {
         a = class z { }
       } catch (q) { }
     `
-    /** @type {BabelAutoImportPluginDeclaration} */
-    const declaration = {
-      members: ['x', 'y', 'z', 'q'], path: 'some-path'
+    /** @type {BabelAutoImportPluginOption} */
+    const option = {
+      x: { from: 'some-path' },
+      y: { from: 'some-path' },
+      z: { from: 'some-path' },
+      q: { from: 'some-path' }
     }
     const output = input
 
-    assert.strictEqual(...isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, option))
   })
 
   it('case 11', () => {
@@ -291,13 +294,15 @@ describe('Tests', () => {
         c: function z () { }
       }
     `
-    /** @type {BabelAutoImportPluginDeclaration} */
-    const declaration = {
-      members: ['x', 'y', 'z'], path: 'some-path'
+    /** @type {BabelAutoImportPluginOption} */
+    const option = {
+      x: { from: 'some-path' },
+      y: { from: 'some-path' },
+      z: { from: 'some-path' }
     }
     const output = input
 
-    assert.strictEqual(...isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, option))
   })
 
   it('case 12', () => {
@@ -306,22 +311,24 @@ describe('Tests', () => {
 
       [y] = b
     `
-    /** @type {BabelAutoImportPluginDeclaration} */
-    const declaration = {
-      members: ['x', 'y', 'z'], path: 'some-path'
+    /** @type {BabelAutoImportPluginOption} */
+    const option = {
+      x: { from: 'some-path' },
+      y: { from: 'some-path' },
+      z: { from: 'some-path' }
     }
     const output = input
 
-    assert.strictEqual(...isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, option))
   })
 
   it('case 13', () => {
     const input = `
       export default x
     `
-    /** @type {BabelAutoImportPluginDeclaration} */
-    const declaration = {
-      default: 'x', path: 'some-path'
+    /** @type {BabelAutoImportPluginOption} */
+    const option = {
+      x: { from: 'some-path', default: true }
     }
     const output = `
       import x from "some-path"
@@ -329,7 +336,7 @@ describe('Tests', () => {
       export default x
     `
 
-    assert.strictEqual(...isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, option))
   })
 
   it('case 14', () => {
@@ -340,9 +347,11 @@ describe('Tests', () => {
         z: c
       }
     `
-    /** @type {BabelAutoImportPluginDeclaration} */
-    const declaration = {
-      members: ['x', 'y', 'z'], path: 'some-path'
+    /** @type {BabelAutoImportPluginOption} */
+    const option = {
+      x: { from: 'some-path' },
+      y: { from: 'some-path' },
+      z: { from: 'some-path' }
     }
     const output = `
       import { x } from "some-path"
@@ -354,7 +363,7 @@ describe('Tests', () => {
       }
     `
 
-    assert.strictEqual(...isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, option))
   })
 
   it('case 15', () => {
@@ -364,9 +373,9 @@ describe('Tests', () => {
         let b = x
       }())
     `
-    /** @type {BabelAutoImportPluginDeclaration} */
-    const declaration = {
-      default: 'x', path: 'some-path'
+    /** @type {BabelAutoImportPluginOption} */
+    const option = {
+      x: { from: 'some-path', default: true }
     }
     const output = `
       import x from "some-path"
@@ -377,16 +386,16 @@ describe('Tests', () => {
       })()
     `
 
-    assert.strictEqual(...isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, option))
   })
 
   it('case 16', () => {
     const input = `
       let a = b + x
     `
-    /** @type {BabelAutoImportPluginDeclaration} */
-    const declaration = {
-      default: 'x', path: 'some-path'
+    /** @type {BabelAutoImportPluginOption} */
+    const option = {
+      x: { from: 'some-path', default: true }
     }
     const output = `
       import x from "some-path"
@@ -394,16 +403,18 @@ describe('Tests', () => {
       let a = b + x
     `
 
-    assert.strictEqual(...isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, option))
   })
 
   it('case 17', () => {
     const input = `
       let a = x ? y : z
     `
-    /** @type {BabelAutoImportPluginDeclaration} */
-    const declaration = {
-      members: ['x', 'y', 'z'], path: 'some-path'
+    /** @type {BabelAutoImportPluginOption} */
+    const option = {
+      x: { from: 'some-path' },
+      y: { from: 'some-path' },
+      z: { from: 'some-path' }
     }
     const output = `
       import { x } from "some-path"
@@ -413,7 +424,7 @@ describe('Tests', () => {
       let a = x ? y : z
     `
 
-    assert.strictEqual(...isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, option))
   })
 
   it('case 18', () => {
@@ -424,9 +435,11 @@ describe('Tests', () => {
 
       if (z) { }
     `
-    /** @type {BabelAutoImportPluginDeclaration} */
-    const declaration = {
-      members: ['x', 'y', 'z'], path: 'some-path'
+    /** @type {BabelAutoImportPluginOption} */
+    const option = {
+      x: { from: 'some-path' },
+      y: { from: 'some-path' },
+      z: { from: 'some-path' }
     }
     const output = `
       import { x } from "some-path"
@@ -440,7 +453,7 @@ describe('Tests', () => {
       if (z) { }
     `
 
-    assert.strictEqual(...isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, option))
   })
 
   it('case 19', () => {
@@ -449,9 +462,11 @@ describe('Tests', () => {
 
       for (let i = 0; y; z) { }
     `
-    /** @type {BabelAutoImportPluginDeclaration} */
-    const declaration = {
-      members: ['x', 'y', 'z'], path: 'some-path'
+    /** @type {BabelAutoImportPluginOption} */
+    const option = {
+      x: { from: 'some-path' },
+      y: { from: 'some-path' },
+      z: { from: 'some-path' }
     }
     const output = `
       import { x } from "some-path"
@@ -463,7 +478,7 @@ describe('Tests', () => {
       for (let i = 0; y; z) { }
     `
 
-    assert.strictEqual(...isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, option))
   })
 
   it('case 20', () => {
@@ -472,9 +487,11 @@ describe('Tests', () => {
       new a.y()
       new z()
     `
-    /** @type {BabelAutoImportPluginDeclaration} */
-    const declaration = {
-      members: ['x', 'y', 'z'], path: 'some-path'
+    /** @type {BabelAutoImportPluginOption} */
+    const option = {
+      x: { from: 'some-path' },
+      y: { from: 'some-path' },
+      z: { from: 'some-path' }
     }
     const output = `
       import { x } from "some-path"
@@ -485,7 +502,7 @@ describe('Tests', () => {
       new z()
     `
 
-    assert.strictEqual(...isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, option))
   })
 
   it('case 21', () => {
@@ -498,9 +515,11 @@ describe('Tests', () => {
 
       switch (z) { }
     `
-    /** @type {BabelAutoImportPluginDeclaration} */
-    const declaration = {
-      members: ['x', 'y', 'z'], path: 'some-path'
+    /** @type {BabelAutoImportPluginOption} */
+    const option = {
+      x: { from: 'some-path' },
+      y: { from: 'some-path' },
+      z: { from: 'some-path' }
     }
     const output = `
       import { x } from "some-path"
@@ -516,7 +535,7 @@ describe('Tests', () => {
       switch (z) { }
     `
 
-    assert.strictEqual(...isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, option))
   })
 
   it('case 22', () => {
@@ -524,9 +543,11 @@ describe('Tests', () => {
       throw x
       +y
     `
-    /** @type {BabelAutoImportPluginDeclaration} */
-    const declaration = {
-      members: ['x', 'y', 'z'], path: 'some-path'
+    /** @type {BabelAutoImportPluginOption} */
+    const option = {
+      x: { from: 'some-path' },
+      y: { from: 'some-path' },
+      z: { from: 'some-path' }
     }
     const output = `
       import { x } from "some-path"
@@ -536,7 +557,7 @@ describe('Tests', () => {
       +y
     `
 
-    assert.strictEqual(...isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, option))
   })
 
   it('case 23', () => {
@@ -545,9 +566,10 @@ describe('Tests', () => {
 
       let B = class B extends Y { }
     `
-    /** @type {BabelAutoImportPluginDeclaration} */
-    const declaration = {
-      members: ['X', 'Y'], path: 'some-path'
+    /** @type {BabelAutoImportPluginOption} */
+    const option = {
+      X: { from: 'some-path' },
+      Y: { from: 'some-path' }
     }
     const output = `
       import { X } from "some-path"
@@ -558,16 +580,16 @@ describe('Tests', () => {
       let B = class B extends Y { }
     `
 
-    assert.strictEqual(...isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, option))
   })
 
   it('case 24', () => {
     const input = `
       someVariable
     `
-    /** @type {BabelAutoImportPluginDeclaration} */
-    const declaration = {
-      anonymous: ['someVariable'], path: 'some-path/some-module.js'
+    /** @type {BabelAutoImportPluginOption} */
+    const option = {
+      someVariable: { from: 'some-path/some-module.js', sideEffect: true }
     }
     const output = `
       import "some-path/some-module.js"
@@ -575,16 +597,17 @@ describe('Tests', () => {
       someVariable
     `
 
-    assert.strictEqual(...isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, option))
   })
 
   it('case 25', () => {
     const input = `
       let x = a + b
     `
-    /** @type {BabelAutoImportPluginDeclaration} */
-    const declaration = {
-      anonymous: ['a', 'b'], path: 'some-path/some-module.js'
+    /** @type {BabelAutoImportPluginOption} */
+    const option = {
+      a: { from: 'some-path/some-module.js', sideEffect: true },
+      b: { from: 'some-path/some-module.js', sideEffect: true }
     }
     const output = `
       import "some-path/some-module.js"
@@ -592,17 +615,21 @@ describe('Tests', () => {
       let x = a + b
     `
 
-    assert.strictEqual(...isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, option))
   })
 
   it('case 26', () => {
     const input = `
       styles.className
     `
-    const filename = './componentName.js'
-    /** @type {BabelAutoImportPluginDeclaration} */
-    const declaration = {
-      default: 'styles', path: './[name].css'
+    /** @type {BabelAutoImportPluginOption} */
+    const option = {
+      styles (babel, program, state) {
+        return {
+          from: `./${path.relative(state.cwd, state.filename).replace(/\.js$/, '.css')}`,
+          default: true
+        }
+      }
     }
     const output = `
       import styles from "./componentName.css"
@@ -610,20 +637,23 @@ describe('Tests', () => {
       styles.className
     `
 
-    assert.strictEqual(...isEqual(input, output, [declaration], filename))
+    assert.strictEqual(...isEqual(input, output, option, {
+      filename: './componentName.js'
+    }))
   })
 
   it('case 27', () => {
     const input = `
       styles.className
     `
-    const filename = './name.component.js'
-    /** @type {BabelAutoImportPluginDeclaration} */
-    const declaration = {
-      default: 'styles',
-      path: './[name].css',
-      nameReplacePattern: '.component.js$',
-      nameReplaceString: '.styles'
+    /** @type {BabelAutoImportPluginOption} */
+    const option = {
+      styles (babel, program, state) {
+        return {
+          from: `./${path.relative(state.cwd, state.filename).replace(/\.component\.js$/, '.styles.css')}`,
+          default: true
+        }
+      }
     }
     const output = `
       import styles from "./name.styles.css"
@@ -631,9 +661,32 @@ describe('Tests', () => {
       styles.className
     `
 
-    assert.strictEqual(...isEqual(input, output, [declaration], filename))
+    assert.strictEqual(...isEqual(input, output, option, {
+      filename: './name.component.js'
+    }))
+  })
+
+  it('case 28', () => {
+    const input = `
+      someVariable
+    `
+    /** @type {BabelAutoImportPluginOption} */
+    const option = {
+      factory (babel, program, state) {
+        return {
+          someVariable: { from: 'some-path/some-module.js', default: true }
+        }
+      }
+    }
+    const output = `
+      import someVariable from "some-path/some-module.js"
+
+      someVariable
+    `
+
+    assert.strictEqual(...isEqual(input, output, option))
   })
 })
 
-/** @typedef {import('./main').BabelAutoImportPluginDeclaration} BabelAutoImportPluginDeclaration */
+/** @typedef {import('@babel/core').TransformOptions} TransformOptions */
 /** @typedef {import('./main').BabelAutoImportPluginOption} BabelAutoImportPluginOption */
