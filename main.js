@@ -23,6 +23,19 @@ const isSideEffectImport = resolution =>
   Boolean(resolution.sideEffect)
 
 /**
+ * @template T
+ * @param {T | Iterable<T>} values
+ * @returns {IterableIterator<T>}
+ */
+function* every (values) {
+  if (Symbol.iterator in values) {
+    yield* /** @type {Iterable<T>} */ (values)
+  } else {
+    yield /** @type {T} */ (values)
+  }
+}
+
+/**
  * @param {import('@babel/core')} babel
  * @param {string} id
  * @param {BabelAutoImportPluginImport} resolution
@@ -62,18 +75,22 @@ function* resolve (babel, path, state) {
   if (isFactory(factory)) {
     const option = factory.factory(babel, path, state)
 
-    for (const [id, resolution] of Object.entries(option)) {
-      yield [id, evaluate(babel, id, resolution)]
+    for (const [id, resolutions] of Object.entries(option)) {
+      for (const resolution of every(resolutions)) {
+        yield [id, evaluate(babel, id, resolution)]
+      }
     }
   } else {
     const option = factory
 
     for (const [id, resolutionFactory] of Object.entries(option)) {
-      const resolution = typeof resolutionFactory === 'function'
+      const resolutions = typeof resolutionFactory === 'function'
         ? resolutionFactory(babel, path, state)
         : resolutionFactory
 
-      yield [id, evaluate(babel, id, resolution)]
+      for (const resolution of every(resolutions)) {
+        yield [id, evaluate(babel, id, resolution)]
+      }
     }
   }
 }
@@ -229,11 +246,16 @@ const plugin = function (babel) {
  */
 
 /**
+ * @typedef {BabelAutoImportPluginImport |
+ *  BabelAutoImportPluginImport[]} BabelAutoImportPluginImports
+ */
+
+/**
  * @callback BabelAutoImportPluginImportCallback
  * @param {Babel} babel
  * @param {ProgramPath} path
  * @param {any} state
- * @returns {BabelAutoImportPluginImport}
+ * @returns {BabelAutoImportPluginImports}
  */
 
 /**
@@ -242,7 +264,7 @@ const plugin = function (babel) {
  * @param {ProgramPath} path
  * @param {any} state
  * @returns {{
- *  [identifier: string]: BabelAutoImportPluginImport
+ *  [identifier: string]: BabelAutoImportPluginImports
  * }}
  */
 
@@ -253,7 +275,7 @@ const plugin = function (babel) {
 
 /**
  * @typedef {BabelAutoImportPluginImportFactoryOption | {
- *  [identifier: string]: BabelAutoImportPluginImport | BabelAutoImportPluginImportCallback
+ *  [identifier: string]: BabelAutoImportPluginImports | BabelAutoImportPluginImportCallback
  * }} BabelAutoImportPluginOption
  */
 

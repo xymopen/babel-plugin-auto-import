@@ -674,7 +674,7 @@ describe('Tests', () => {
     const option = {
       factory (babel, program, state) {
         return {
-          someVariable: { from: 'some-path/some-module.js', default: true }
+          someVariable: [{ from: 'some-path/some-module.js', default: true }]
         }
       }
     }
