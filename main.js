@@ -36,6 +36,19 @@ const evaluate = (declaration, babel, path, state) => {
     ])
   }
 
+  if (declaration.anonymous) {
+    result.push(...declaration.anonymous
+      .filter(anonymous => anonymous)
+      .map(
+        /** @returns {[string, ImportDeclaration]} */
+        anonymous => ([
+          anonymous,
+          t.importDeclaration([], t.stringLiteral(source))
+        ])
+      )
+    )
+  }
+
   if (declaration.members) {
     result.push(...declaration.members
       .filter(member => member)
@@ -109,7 +122,25 @@ const plugin = function (babel) {
   return {
     pre () {
       /** @type {Set<string>} */
+      const importedSources = new Set()
+      /** @type {Set<string>} */
       const lvals = new Set()
+
+      /** De-duplicate side effect import */
+      this.isSideEffectImported =
+        /** @param {ImportDeclaration} statement */
+        statement => {
+          const source = statement.source.value
+
+          if (statement.specifiers.length === 0 &&
+            importedSources.has(source)) {
+            return true
+          } else {
+            importedSources.add(source)
+
+            return false
+          }
+        }
 
       /** @param {string} gvar */
       this.hasGVar = gvar => lvals.has(gvar)
@@ -140,13 +171,18 @@ const plugin = function (babel) {
                 if (
                   path.scope.hasGlobal(id) &&
                   // @ts-ignore
+                  !this.isSideEffectImported(statement) &&
+                  // @ts-ignore
                   !this.hasGVar(id)
                 ) {
                   yield statement
                 }
               }
             }).call(this))
-          )).concat(path.node.body)
+          )).concat(path.node.body
+            .filter(statement =>
+              !t.isImportDeclaration(statement) ||
+              !this.isSideEffectImported(statement)))
         }
       }
     }
@@ -180,6 +216,7 @@ const plugin = function (babel) {
  * @property {string} path
  * @property {string} [default]
  * @property {string[]} [members]
+ * @property {string[]} [anonymous]
  * @property {string} [nameReplacePattern]
  * @property {string} [nameReplaceString]
  */
