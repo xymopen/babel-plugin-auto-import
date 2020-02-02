@@ -1,0 +1,55 @@
+{
+  "name": "@xymopen/babel-plugin-auto-import",
+  "version": "1.0.0",
+  "description": "Convert global variables to import statements",
+  "keywords": [
+    "babel-plugin",
+    "import",
+    "module"
+  ],
+  "homepage": "https://github.com/xymopen/babel-plugin-auto-import",
+  "bugs": {
+    "url": "https://github.com/xymopen/babel-plugin-auto-import/issues"
+  },
+  "license": "BSD-3-Clause",
+  "author": {
+    "name": "Xu Yiming",
+    "email": "xuyiming.open@outlook.com"
+  },
+  "main": "main.js",
+  "repository": {
+    "type": "git",
+    "url": "github:xymopen/babel-plugin-auto-import"
+  },
+  "scripts": {
+    "lint": "tsc --build tsconfig.json && eslint -c .eslintrc.json *.js",
+    "test": "nyc --reporter=text --reporter=html mocha"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.0.0",
+    "@babel/core": "^7.0.0",
+    "@babel/preset-env": "^7.0.0",
+    "@types/babel__core": "^7.0.0",
+    "@types/babel__traverse": "^7.0.0",
+    "@types/chai": "^4.2.8",
+    "@types/mocha": "^7.0.0",
+    "@types/node": ">= 12.0.0",
+    "chai": "^4.2.0",
+    "eslint": "^6.0.0",
+    "eslint-cli": "^1.0.0",
+    "eslint-config-standard": "^14.1.0",
+    "eslint-plugin-import": "^2.20.0",
+    "eslint-plugin-node": "^11.0.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-standard": "^4.0.1",
+    "mocha": "^7.0.0",
+    "nyc": "^14.0.0",
+    "typescript": "^3.7.0"
+  },
+  "peerDependencies": {
+    "@babel/core": "^7.0.0"
+  },
+  "engines": {
+    "node": ">= 12.0.0"
+  }
+}

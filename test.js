@@ -3,7 +3,7 @@ const {assert} = require("chai");
 
 
 const babelOptions = {
-    plugins: [[require('../').default, { declarations: null }]]
+    plugins: [[require('./main.js').default, { declarations: null }]]
 };
 const spaces = /\s+/g;
 

@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "moduleResolution": "node",
+    "target": "ESNext",
+    "allowJs": true,
+    "checkJs": true,
+    "strict": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": false,
+    "noEmit": true
+  },
+  "typeAcquisition": {
+    "enable": true
+  },
+  "include": [
+    "**/*.js",
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
