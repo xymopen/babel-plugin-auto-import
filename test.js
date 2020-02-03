@@ -13,6 +13,12 @@ function isEqual (input, expected, declarations, filename) {
 
   /** @type {import('@babel/core').TransformOptions} */
   const babelOptions = {
+    root: undefined,
+    configFile: false,
+    babelrc: false,
+    babelrcRoots: undefined,
+    sourceType: 'module',
+    code: true,
     plugins: [[plugin, { declarations }]]
   }
 
