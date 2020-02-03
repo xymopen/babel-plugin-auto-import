@@ -5,7 +5,7 @@ const plugin = require('./main.js').default
 /**
  * @param {string} input
  * @param {string} expected
- * @param {*} declarations
+ * @param {BabelAutoImportPluginDeclaration[]} declarations
  * @param {string} [filename]
  * @returns {[string, string]}
  */
@@ -47,6 +47,7 @@ describe('Tests', () => {
     const input = `
       someVariable
     `
+    /** @type {BabelAutoImportPluginDeclaration} */
     const declaration = {
       default: 'someVariable', path: 'some-path/some-module.js'
     }
@@ -65,6 +66,7 @@ describe('Tests', () => {
 
       someVariable
     `
+    /** @type {BabelAutoImportPluginDeclaration} */
     const declaration = {
       default: 'someVariable', path: 'some-path/some-module.js'
     }
@@ -81,6 +83,7 @@ describe('Tests', () => {
     const input = `
       someVariable
     `
+    /** @type {BabelAutoImportPluginDeclaration} */
     const declaration = {
       members: ['someVariable'], path: 'some-path/some-module.js'
     }
@@ -111,6 +114,8 @@ describe('Tests', () => {
         })()
       })()
     `
+    /** @type {BabelAutoImportPluginDeclaration} */
+    /** @type {BabelAutoImportPluginDeclaration[]} */
     const declarations = [
       { default: 'x', path: 'some-path/x.js' },
       { members: ['y'], path: 'some-path/y.js' }
@@ -142,6 +147,7 @@ describe('Tests', () => {
     const input = `
       let someVariable
     `
+    /** @type {BabelAutoImportPluginDeclaration} */
     const declaration = {
       default: 'someVariable', path: 'some-path/some-module.js'
     }
@@ -170,6 +176,7 @@ describe('Tests', () => {
         })()
       })()
     `
+    /** @type {BabelAutoImportPluginDeclaration} */
     const declaration = {
       path: 'some-path',
       default: 'x',
@@ -203,6 +210,7 @@ describe('Tests', () => {
     const input = `
       x.y.z
     `
+    /** @type {BabelAutoImportPluginDeclaration} */
     const declaration = {
       members: ['x', 'y', 'z'], path: 'some-path'
     }
@@ -220,6 +228,7 @@ describe('Tests', () => {
       let a = x.b()
       let c = d.b()
     `
+    /** @type {BabelAutoImportPluginDeclaration} */
     const declaration = {
       default: 'x', path: 'some-path'
     }
@@ -245,6 +254,7 @@ describe('Tests', () => {
         }
       }
     `
+    /** @type {BabelAutoImportPluginDeclaration} */
     const declaration = {
       members: ['x', 'y'], path: 'some-path'
     }
@@ -263,6 +273,7 @@ describe('Tests', () => {
         a = class z { }
       } catch (q) { }
     `
+    /** @type {BabelAutoImportPluginDeclaration} */
     const declaration = {
       members: ['x', 'y', 'z', 'q'], path: 'some-path'
     }
@@ -280,6 +291,7 @@ describe('Tests', () => {
         c: function z () { }
       }
     `
+    /** @type {BabelAutoImportPluginDeclaration} */
     const declaration = {
       members: ['x', 'y', 'z'], path: 'some-path'
     }
@@ -294,6 +306,7 @@ describe('Tests', () => {
 
       [y] = b
     `
+    /** @type {BabelAutoImportPluginDeclaration} */
     const declaration = {
       members: ['x', 'y', 'z'], path: 'some-path'
     }
@@ -306,6 +319,7 @@ describe('Tests', () => {
     const input = `
       export default x
     `
+    /** @type {BabelAutoImportPluginDeclaration} */
     const declaration = {
       default: 'x', path: 'some-path'
     }
@@ -326,6 +340,7 @@ describe('Tests', () => {
         z: c
       }
     `
+    /** @type {BabelAutoImportPluginDeclaration} */
     const declaration = {
       members: ['x', 'y', 'z'], path: 'some-path'
     }
@@ -349,6 +364,7 @@ describe('Tests', () => {
         let b = x
       }())
     `
+    /** @type {BabelAutoImportPluginDeclaration} */
     const declaration = {
       default: 'x', path: 'some-path'
     }
@@ -368,6 +384,7 @@ describe('Tests', () => {
     const input = `
       let a = b + x
     `
+    /** @type {BabelAutoImportPluginDeclaration} */
     const declaration = {
       default: 'x', path: 'some-path'
     }
@@ -384,6 +401,7 @@ describe('Tests', () => {
     const input = `
       let a = x ? y : z
     `
+    /** @type {BabelAutoImportPluginDeclaration} */
     const declaration = {
       members: ['x', 'y', 'z'], path: 'some-path'
     }
@@ -406,6 +424,7 @@ describe('Tests', () => {
 
       if (z) { }
     `
+    /** @type {BabelAutoImportPluginDeclaration} */
     const declaration = {
       members: ['x', 'y', 'z'], path: 'some-path'
     }
@@ -430,6 +449,7 @@ describe('Tests', () => {
 
       for (let i = 0; y; z) { }
     `
+    /** @type {BabelAutoImportPluginDeclaration} */
     const declaration = {
       members: ['x', 'y', 'z'], path: 'some-path'
     }
@@ -452,6 +472,7 @@ describe('Tests', () => {
       new a.y()
       new z()
     `
+    /** @type {BabelAutoImportPluginDeclaration} */
     const declaration = {
       members: ['x', 'y', 'z'], path: 'some-path'
     }
@@ -477,6 +498,7 @@ describe('Tests', () => {
 
       switch (z) { }
     `
+    /** @type {BabelAutoImportPluginDeclaration} */
     const declaration = {
       members: ['x', 'y', 'z'], path: 'some-path'
     }
@@ -502,6 +524,7 @@ describe('Tests', () => {
       throw x
       +y
     `
+    /** @type {BabelAutoImportPluginDeclaration} */
     const declaration = {
       members: ['x', 'y', 'z'], path: 'some-path'
     }
@@ -522,6 +545,7 @@ describe('Tests', () => {
 
       let B = class B extends Y { }
     `
+    /** @type {BabelAutoImportPluginDeclaration} */
     const declaration = {
       members: ['X', 'Y'], path: 'some-path'
     }
@@ -541,6 +565,7 @@ describe('Tests', () => {
     const input = `
       someVariable
     `
+    /** @type {BabelAutoImportPluginDeclaration} */
     const declaration = {
       anonymous: ['someVariable'], path: 'some-path/some-module.js'
     }
@@ -557,6 +582,7 @@ describe('Tests', () => {
     const input = `
       let x = a + b
     `
+    /** @type {BabelAutoImportPluginDeclaration} */
     const declaration = {
       anonymous: ['a', 'b'], path: 'some-path/some-module.js'
     }
@@ -574,6 +600,7 @@ describe('Tests', () => {
       styles.className
     `
     const filename = './componentName.js'
+    /** @type {BabelAutoImportPluginDeclaration} */
     const declaration = {
       default: 'styles', path: './[name].css'
     }
@@ -591,6 +618,7 @@ describe('Tests', () => {
       styles.className
     `
     const filename = './name.component.js'
+    /** @type {BabelAutoImportPluginDeclaration} */
     const declaration = {
       default: 'styles',
       path: './[name].css',
@@ -606,3 +634,6 @@ describe('Tests', () => {
     assert.strictEqual(...isEqual(input, output, [declaration], filename))
   })
 })
+
+/** @typedef {import('./main').BabelAutoImportPluginDeclaration} BabelAutoImportPluginDeclaration */
+/** @typedef {import('./main').BabelAutoImportPluginOption} BabelAutoImportPluginOption */
