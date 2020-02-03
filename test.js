@@ -7,19 +7,17 @@ const plugin = require('./main.js').default
  * @param {string} expected
  * @param {*} declarations
  * @param {string} [filename]
+ * @returns {[string, string]}
  */
 function isEqual (input, expected, declarations, filename) {
-  const spaces = /\s+/g
-
   /** @type {import('@babel/core').TransformOptions} */
   const babelOptions = {
+    code: true,
     root: undefined,
     configFile: false,
     babelrc: false,
     babelrcRoots: undefined,
-    sourceType: 'module',
-    code: true,
-    plugins: [[plugin, { declarations }]]
+    sourceType: 'module'
   }
 
   if (!babelOptions.filename) {
@@ -28,11 +26,20 @@ function isEqual (input, expected, declarations, filename) {
 
   const output = /** @type {string} */(
     (/** @type {babel.BabelFileResult} */(
-      babel.transform(input, babelOptions))
+      babel.transform(input, {
+        ...babelOptions,
+        plugins: [[plugin, { declarations }]]
+      }))
     ).code
   )
 
-  return output.replace(spaces, '') === expected.replace(spaces, '')
+  expected = /** @type {string} */(
+    (/** @type {babel.BabelFileResult} */(
+      babel.transform(expected, babelOptions))
+    ).code
+  )
+
+  return [output, expected]
 }
 
 describe('Tests', () => {
@@ -49,7 +56,7 @@ describe('Tests', () => {
       someVariable
     `
 
-    assert.isTrue(isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, [declaration]))
   })
 
   it('case 2', () => {
@@ -67,7 +74,7 @@ describe('Tests', () => {
       someVariable
     `
 
-    assert.isTrue(isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, [declaration]))
   })
 
   it('case 3', () => {
@@ -83,7 +90,7 @@ describe('Tests', () => {
       someVariable
     `
 
-    assert.isTrue(isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, [declaration]))
   })
 
   it('case 4', () => {
@@ -127,7 +134,7 @@ describe('Tests', () => {
       })()
     `
 
-    assert.isTrue(isEqual(input, output, declarations))
+    assert.strictEqual(...isEqual(input, output, declarations))
   })
 
   it('case 5', () => {
@@ -141,7 +148,7 @@ describe('Tests', () => {
       let someVariable
     `
 
-    assert.isTrue(isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, [declaration]))
   })
 
   it('case 6', () => {
@@ -185,7 +192,7 @@ describe('Tests', () => {
       })()
     `
 
-    assert.isTrue(isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, [declaration]))
   })
 
   it('case 7', () => {
@@ -201,7 +208,7 @@ describe('Tests', () => {
       x.y.z
     `
 
-    assert.isTrue(isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, [declaration]))
   })
 
   it('case 8', () => {
@@ -219,7 +226,7 @@ describe('Tests', () => {
       let c = d.b()
     `
 
-    assert.isTrue(isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, [declaration]))
   })
 
   it('case 9', () => {
@@ -239,7 +246,7 @@ describe('Tests', () => {
     }
     const output = input
 
-    assert.isTrue(isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, [declaration]))
   })
 
   it('case 10', () => {
@@ -257,7 +264,7 @@ describe('Tests', () => {
     }
     const output = input
 
-    assert.isTrue(isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, [declaration]))
   })
 
   it('case 11', () => {
@@ -274,7 +281,7 @@ describe('Tests', () => {
     }
     const output = input
 
-    assert.isTrue(isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, [declaration]))
   })
 
   it('case 12', () => {
@@ -288,7 +295,7 @@ describe('Tests', () => {
     }
     const output = input
 
-    assert.isTrue(isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, [declaration]))
   })
 
   it('case 13', () => {
@@ -304,7 +311,7 @@ describe('Tests', () => {
       export default x
     `
 
-    assert.isTrue(isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, [declaration]))
   })
 
   it('case 14', () => {
@@ -328,7 +335,7 @@ describe('Tests', () => {
       }
     `
 
-    assert.isTrue(isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, [declaration]))
   })
 
   it('case 15', () => {
@@ -350,7 +357,7 @@ describe('Tests', () => {
       })()
     `
 
-    assert.isTrue(isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, [declaration]))
   })
 
   it('case 16', () => {
@@ -366,7 +373,7 @@ describe('Tests', () => {
       let a = b + x
     `
 
-    assert.isTrue(isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, [declaration]))
   })
 
   it('case 17', () => {
@@ -382,7 +389,7 @@ describe('Tests', () => {
       let a = x ? y : z
     `
 
-    assert.isTrue(isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, [declaration]))
   })
 
   it('case 18', () => {
@@ -406,7 +413,7 @@ describe('Tests', () => {
       if (z) { }
     `
 
-    assert.isTrue(isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, [declaration]))
   })
 
   it('case 19', () => {
@@ -426,7 +433,7 @@ describe('Tests', () => {
       for (let i = 0; y; z) { }
     `
 
-    assert.isTrue(isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, [declaration]))
   })
 
   it('case 20', () => {
@@ -446,7 +453,7 @@ describe('Tests', () => {
       new z()
     `
 
-    assert.isTrue(isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, [declaration]))
   })
 
   it('case 21', () => {
@@ -474,7 +481,7 @@ describe('Tests', () => {
       switch (z) { }
     `
 
-    assert.isTrue(isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, [declaration]))
   })
 
   it('case 22', () => {
@@ -492,7 +499,7 @@ describe('Tests', () => {
       +y
     `
 
-    assert.isTrue(isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, [declaration]))
   })
 
   it('case 23', () => {
@@ -512,7 +519,7 @@ describe('Tests', () => {
       let B = class B extends Y { }
     `
 
-    assert.isTrue(isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, [declaration]))
   })
 
   it('case 24', () => {
@@ -528,7 +535,7 @@ describe('Tests', () => {
       someVariable
     `
 
-    assert.isTrue(isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, [declaration]))
   })
 
   it('case 25', () => {
@@ -544,7 +551,7 @@ describe('Tests', () => {
       let x = a + b
     `
 
-    assert.isTrue(isEqual(input, output, [declaration]))
+    assert.strictEqual(...isEqual(input, output, [declaration]))
   })
 
   it('case 26', () => {
@@ -561,7 +568,7 @@ describe('Tests', () => {
       styles.className
     `
 
-    assert.isTrue(isEqual(input, output, [declaration], filename))
+    assert.strictEqual(...isEqual(input, output, [declaration], filename))
   })
 
   it('case 27', () => {
@@ -581,6 +588,6 @@ describe('Tests', () => {
       styles.className
     `
 
-    assert.isTrue(isEqual(input, output, [declaration], filename))
+    assert.strictEqual(...isEqual(input, output, [declaration], filename))
   })
 })
