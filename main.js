@@ -279,5 +279,5 @@ const plugin = function (babel) {
  * }} BabelAutoImportPluginOption
  */
 
-module.exports = /** @type {DefaultExportShim<BabelPlugin<any>>} */(plugin)
-module.exports.default = /** @type {DefaultExportShim<BabelPlugin<any>>} */(plugin)
+module.exports = /** @type {DefaultExportShim<typeof plugin>} */(plugin)
+module.exports.default = /** @type {DefaultExportShim<typeof plugin>} */(plugin)
