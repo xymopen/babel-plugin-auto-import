@@ -62,6 +62,40 @@ function evaluate (babel, id, resolution) {
 }
 
 /**
+ * @param {import('@babel/core')} babel
+ * @param {import('@babel/types').LVal} lval
+ * @returns {IterableIterator<import('@babel/types').Identifier>}
+ */
+function* variables (babel, lval) {
+  const t = babel.types
+
+  if (t.isIdentifier(lval)) {
+    yield lval
+  } else if (t.isArrayPattern(lval)) {
+    for (const element of lval.elements) {
+      if (element) {
+        yield* variables(babel, element)
+      }
+    }
+  } else if (t.isRestElement(lval)) {
+    yield* variables(babel, lval.argument)
+  } else if (t.isObjectPattern(lval)) {
+    for (const property of lval.properties) {
+      if (t.isObjectProperty(property)) {
+        yield* variables(
+          babel,
+          /** @type {import('@babel/types').PatternLike} */(property.value)
+        )
+      } else if (t.isRestElement(lval)) {
+        yield* variables(babel, lval.argument)
+      }
+    }
+  } else if (t.isAssignmentPattern(lval)) {
+    yield* variables(babel, lval.left)
+  }
+}
+
+/**
  *
  * @param {Babel} babel
  * @param {ProgramPath} path
@@ -98,36 +132,6 @@ function* resolve (babel, path, state) {
 /** @type {BabelPlugin<any>} */
 const plugin = function (babel) {
   const t = babel.types
-
-  /**
-   * @param {import('@babel/types').LVal} lval
-   * @returns {IterableIterator<import('@babel/types').Identifier>}
-   */
-  function* variables (lval) {
-    if (t.isIdentifier(lval)) {
-      yield lval
-    } else if (t.isArrayPattern(lval)) {
-      for (const element of lval.elements) {
-        if (element) {
-          yield* variables(element)
-        }
-      }
-    } else if (t.isRestElement(lval)) {
-      yield* variables(lval.argument)
-    } else if (t.isObjectPattern(lval)) {
-      for (const property of lval.properties) {
-        if (t.isObjectProperty(property)) {
-          yield* variables(
-            /** @type {import('@babel/types').PatternLike} */(property.value)
-          )
-        } else if (t.isRestElement(lval)) {
-          yield* variables(lval.argument)
-        }
-      }
-    } else if (t.isAssignmentPattern(lval)) {
-      yield* variables(lval.left)
-    }
-  }
 
   return {
     pre () {
@@ -166,7 +170,7 @@ const plugin = function (babel) {
     },
     visitor: {
       AssignmentExpression (path) {
-        for (const gvar of variables(path.node.left)) {
+        for (const gvar of variables(babel, path.node.left)) {
           if (this.isGVar(gvar.name, path.scope)) {
             this.addGVar(gvar.name)
           }
