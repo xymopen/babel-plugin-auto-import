@@ -136,8 +136,8 @@ class MyComponent extends Vue {
 ...into...
 
 ```javascript
-import { Component, Vue, Prop } from 'vue-property-decorator'
 import 'reflect-metadata'
+import { Component, Vue, Prop } from 'vue-property-decorator'
 
 @Component
 class MyComponent extends Vue {

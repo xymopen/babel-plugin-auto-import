@@ -113,7 +113,8 @@ const plugin = function (babel) {
   return {
     pre () {
       this.assignedGlobals = new Set()
-      this.implicitImportDecls = new Map()
+      this.implicitSideEffectImportDecls = new Map()
+      this.implicitModuleImportDecls = new Map()
       this.explicitImportDecls = new Map()
     },
     visitor: {
@@ -132,26 +133,47 @@ const plugin = function (babel) {
         exit (path) {
           for (const [id, resolution] of resolve(babel, path, this)) {
             if (path.scope.hasGlobal(id) && !this.assignedGlobals.has(id)) {
-              const decl = this.implicitImportDecls.get(resolution.from) ||
-                this.explicitImportDecls.get(resolution.from) ||
-                (() => {
+              const implicitSideEffectDecl = this.implicitSideEffectImportDecls.get(resolution.from)
+              const implicitModuleDecl = this.implicitModuleImportDecls.get(resolution.from)
+              const explicitDecl = this.explicitImportDecls.get(resolution.from)
+
+              if (isSideEffectImport(resolution)) {
+                if (!implicitSideEffectDecl && !implicitModuleDecl && !explicitDecl) {
+                  this.implicitSideEffectImportDecls.set(
+                    resolution.from,
+                    t.importDeclaration([], t.stringLiteral(resolution.from))
+                  )
+                }
+              } else {
+                const decl = (() => {
+                  if (implicitSideEffectDecl) {
+                    this.implicitSideEffectImportDecls.delete(resolution.from)
+                    this.implicitModuleImportDecls.set(resolution.from, implicitSideEffectDecl)
+                  }
+
+                  return implicitSideEffectDecl
+                })() || implicitModuleDecl || explicitDecl || (() => {
                   const decl = t.importDeclaration([], t.stringLiteral(resolution.from))
-                  this.implicitImportDecls.set(resolution.from, decl)
+
+                  this.implicitModuleImportDecls.set(resolution.from, decl)
+
                   return decl
                 })()
 
-              if (isDefaultImport(resolution)) {
-                decl.specifiers.unshift(t.importDefaultSpecifier(t.identifier(id)))
-              } else if (!isSideEffectImport(resolution)) {
-                decl.specifiers.push(t.importSpecifier(
-                  t.identifier(id), t.identifier(resolution.export || id)
-                ))
+                if (isDefaultImport(resolution)) {
+                  decl.specifiers.unshift(t.importDefaultSpecifier(t.identifier(id)))
+                } else {
+                  decl.specifiers.push(t.importSpecifier(
+                    t.identifier(id), t.identifier(resolution.export || id)
+                  ))
+                }
               }
             }
           }
 
           path.node.body.unshift(
-            ...this.implicitImportDecls.values(),
+            ...this.implicitSideEffectImportDecls.values(),
+            ...this.implicitModuleImportDecls.values(),
             ...this.explicitImportDecls.values()
           )
         }
@@ -185,7 +207,8 @@ const plugin = function (babel) {
 /**
  * @typedef BabelAutoImportPluginState
  * @property {Set<string>} assignedGlobals
- * @property {Map<string, ImportDeclaration>} implicitImportDecls
+ * @property {Map<string, ImportDeclaration>} implicitSideEffectImportDecls
+ * @property {Map<string, ImportDeclaration>} implicitModuleImportDecls
  * @property {Map<string, ImportDeclaration>} explicitImportDecls
  */
 

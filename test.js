@@ -666,6 +666,50 @@ describe('Tests', () => {
 
     assert.strictEqual(...isEqual(input, output, option))
   })
+
+  it('should append specificer to side effect import', () => {
+    const input = `
+      x
+      y
+    `
+    /** @type {BabelAutoImportPluginOption} */
+    const option = {
+      x: { from: 'some-path/some-module.js', sideEffect: true },
+      y: { from: 'some-path/some-module.js' }
+    }
+    const output = `
+      import { y } from "some-path/some-module.js"
+
+      x
+      y
+    `
+
+    assert.strictEqual(...isEqual(input, output, option))
+  })
+
+  it('should insert side effect import before other imports', () => {
+    const input = `
+      x
+      y
+    `
+    /** @type {BabelAutoImportPluginOption} */
+    const option = {
+      x: { from: 'some-path/some-module.js' },
+      y: [
+        { from: 'some-path/other-module.js', sideEffect: true },
+        { from: 'some-path/some-module.js' }
+      ]
+    }
+    const output = `
+      import "some-path/other-module.js"
+      import { x, y } from "some-path/some-module.js"
+
+      x
+      y
+    `
+
+    assert.strictEqual(...isEqual(input, output, option))
+  })
 })
 
 /** @typedef {import('@babel/core').TransformOptions} TransformOptions */
