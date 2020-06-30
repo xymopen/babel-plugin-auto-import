@@ -19,8 +19,8 @@ let a = {
 ...into...
 
 ```diff
- import { x } from "some-path"
-+import { y } from "some-path"
+-import { x } from "some-path"
++import { x, y } from "some-path"
 
  let a = {
    b: x,
@@ -95,8 +95,7 @@ class MyComponent extends Vue { }
 ...into...
 
 ```javascript
-import Component from 'vue-class-component'
-import { Vue } from 'vue-class-component'
+import Component, { Vue } from 'vue-class-component'
 
 @Component
 class MyComponent extends Vue { }
@@ -137,10 +136,8 @@ class MyComponent extends Vue {
 ...into...
 
 ```javascript
-import { Component } from 'vue-property-decorator'
-import { Vue } from 'vue-property-decorator'
+import { Component, Vue, Prop } from 'vue-property-decorator'
 import 'reflect-metadata'
-import { Prop } from 'vue-property-decorator'
 
 @Component
 class MyComponent extends Vue {

@@ -37,32 +37,6 @@ function* every (values) {
 
 /**
  * @param {import('@babel/core')} babel
- * @param {string} id
- * @param {BabelAutoImportPluginImport} resolution
- * @returns {ImportDeclaration}
- */
-function evaluate (babel, id, resolution) {
-  const t = babel.types
-
-  if (isDefaultImport(resolution)) {
-    return t.importDeclaration(
-      [t.importDefaultSpecifier(t.identifier(id))],
-      t.stringLiteral(resolution.from)
-    )
-  } else if (isSideEffectImport(resolution)) {
-    return t.importDeclaration([], t.stringLiteral(resolution.from)
-    )
-  } else {
-    return t.importDeclaration([
-      t.importSpecifier(
-        t.identifier(id),
-        t.identifier(resolution.export || id)
-      )], t.stringLiteral(resolution.from))
-  }
-}
-
-/**
- * @param {import('@babel/core')} babel
  * @param {import('@babel/core').types.LVal} lval
  * @returns {IterableIterator<import('@babel/core').types.Identifier>}
  */
@@ -103,7 +77,7 @@ function* variables (babel, lval) {
  * @param {Babel} babel
  * @param {ProgramPath} path
  * @param {any} state
- * @returns {IterableIterator<[string, ImportDeclaration]>}
+ * @returns {IterableIterator<[string, BabelAutoImportPluginImport]>}
  */
 function* resolve (babel, path, state) {
   /** @type {BabelAutoImportPluginOption} */
@@ -114,7 +88,7 @@ function* resolve (babel, path, state) {
 
     for (const [id, resolutions] of Object.entries(option)) {
       for (const resolution of every(resolutions)) {
-        yield [id, evaluate(babel, id, resolution)]
+        yield [id, resolution]
       }
     }
   } else {
@@ -126,80 +100,60 @@ function* resolve (babel, path, state) {
         : resolutionFactory
 
       for (const resolution of every(resolutions)) {
-        yield [id, evaluate(babel, id, resolution)]
+        yield [id, resolution]
       }
     }
   }
 }
 
-/** @type {BabelPlugin<any>} */
+/** @type {BabelPlugin<BabelAutoImportPluginState>} */
 const plugin = function (babel) {
   const t = babel.types
 
   return {
     pre () {
-      /** @type {Set<string>} */
-      const importedSources = new Set()
-      /** @type {Set<string>} */
-      const lvals = new Set()
-
-      /** De-duplicate side effect import */
-      this.isSideEffectImported =
-        /** @param {ImportDeclaration} statement */
-        statement => {
-          const source = statement.source.value
-
-          if (statement.specifiers.length === 0 &&
-            importedSources.has(source)) {
-            return true
-          } else {
-            importedSources.add(source)
-
-            return false
-          }
-        }
-
-      /** @param {string} gvar */
-      this.hasGVar = gvar => lvals.has(gvar)
-
-      /**
-       * @param {string} gvar
-       * @param {Scope} scope
-       */
-      this.isGVar = (gvar, scope) => !scope.hasBinding(gvar)
-
-      /** @param {string} gvar */
-      this.addGVar = gvar => lvals.add(gvar)
+      this.assignedGlobals = new Set()
+      this.implicitImportDecls = new Map()
+      this.explicitImportDecls = new Map()
     },
     visitor: {
+      ImportDeclaration (path) {
+        this.explicitImportDecls.set(path.node.source.value, path.node)
+        path.remove()
+      },
       AssignmentExpression (path) {
-        for (const gvar of variables(babel, path.node.left)) {
-          if (this.isGVar(gvar.name, path.scope)) {
-            this.addGVar(gvar.name)
+        for (const vari of variables(babel, path.node.left)) {
+          if (path.scope.hasGlobal(vari.name)) {
+            this.assignedGlobals.add(vari.name)
           }
         }
       },
       Program: {
-        exit (path, state) {
-          path.node.body = (/** @type {babel.types.Statement[]} */(
-            // eslint-disable-next-line no-extra-parens
-            Array.from((function* () {
-              for (const [id, statement] of resolve(babel, path, state)) {
-                if (
-                  path.scope.hasGlobal(id) &&
-                  // @ts-ignore
-                  !this.isSideEffectImported(statement) &&
-                  // @ts-ignore
-                  !this.hasGVar(id)
-                ) {
-                  yield statement
-                }
+        exit (path) {
+          for (const [id, resolution] of resolve(babel, path, this)) {
+            if (path.scope.hasGlobal(id) && !this.assignedGlobals.has(id)) {
+              const decl = this.implicitImportDecls.get(resolution.from) ||
+                this.explicitImportDecls.get(resolution.from) ||
+                (() => {
+                  const decl = t.importDeclaration([], t.stringLiteral(resolution.from))
+                  this.implicitImportDecls.set(resolution.from, decl)
+                  return decl
+                })()
+
+              if (isDefaultImport(resolution)) {
+                decl.specifiers.unshift(t.importDefaultSpecifier(t.identifier(id)))
+              } else if (!isSideEffectImport(resolution)) {
+                decl.specifiers.push(t.importSpecifier(
+                  t.identifier(id), t.identifier(resolution.export || id)
+                ))
               }
-            }).call(this))
-          )).concat(path.node.body
-            .filter(statement =>
-              !t.isImportDeclaration(statement) ||
-              !this.isSideEffectImported(statement)))
+            }
+          }
+
+          path.node.body.unshift(
+            ...this.implicitImportDecls.values(),
+            ...this.explicitImportDecls.values()
+          )
         }
       }
     }
@@ -226,6 +180,13 @@ const plugin = function (babel) {
  * @callback BabelPlugin
  * @param {Babel} param0
  * @returns {import('@babel/core').PluginObj<S>}
+ */
+
+/**
+ * @typedef BabelAutoImportPluginState
+ * @property {Set<string>} assignedGlobals
+ * @property {Map<string, ImportDeclaration>} implicitImportDecls
+ * @property {Map<string, ImportDeclaration>} explicitImportDecls
  */
 
 /**

@@ -114,8 +114,7 @@ describe('Tests', () => {
     }
     const output = `
       import x from "some-path/x.js"
-      import { y } from "some-path/y.js"
-      import z from "some-path/y.js"
+      import z, { y } from "some-path/y.js"
 
       let a
 
@@ -175,10 +174,7 @@ describe('Tests', () => {
       z: { from: 'some-path' }
     }
     const output = `
-      import x from "some-path"
-      import { y } from "some-path"
-      import { z } from "some-path"
-      import { q } from "some-path"
+      import x, { q, y, z } from "some-path"
 
       let a
 
@@ -412,9 +408,7 @@ describe('Tests', () => {
       z: { from: 'some-path' }
     }
     const output = `
-      import { x } from "some-path"
-      import { y } from "some-path"
-      import { z } from "some-path"
+      import { x, y, z } from "some-path"
 
       let a = x ? y : z
     `
@@ -437,9 +431,7 @@ describe('Tests', () => {
       z: { from: 'some-path' }
     }
     const output = `
-      import { x } from "some-path"
-      import { y } from "some-path"
-      import { z } from "some-path"
+      import { x, y, z } from "some-path"
 
       let a = b => x
 
@@ -464,9 +456,7 @@ describe('Tests', () => {
       z: { from: 'some-path' }
     }
     const output = `
-      import { x } from "some-path"
-      import { y } from "some-path"
-      import { z } from "some-path"
+      import { x, y, z } from "some-path"
 
       for (let a in x) { }
 
@@ -489,8 +479,7 @@ describe('Tests', () => {
       z: { from: 'some-path' }
     }
     const output = `
-      import { x } from "some-path"
-      import { z } from "some-path"
+      import { x, z } from "some-path"
 
       new x()
       new a.y()
@@ -517,9 +506,7 @@ describe('Tests', () => {
       z: { from: 'some-path' }
     }
     const output = `
-      import { x } from "some-path"
-      import { y } from "some-path"
-      import { z } from "some-path"
+      import { x, y, z } from "some-path"
 
       function a () {
         return x
@@ -545,8 +532,7 @@ describe('Tests', () => {
       z: { from: 'some-path' }
     }
     const output = `
-      import { x } from "some-path"
-      import { y } from "some-path"
+      import { x, y } from "some-path"
 
       throw x
       +y
@@ -567,8 +553,7 @@ describe('Tests', () => {
       Y: { from: 'some-path' }
     }
     const output = `
-      import { X } from "some-path"
-      import { Y } from "some-path"
+      import { X, Y } from "some-path"
 
       class A extends X { }
 
