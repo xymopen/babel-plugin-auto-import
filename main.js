@@ -74,24 +74,27 @@ function* variables (babel, lval) {
   } else if (t.isArrayPattern(lval)) {
     for (const element of lval.elements) {
       if (element) {
-        yield* variables(babel, element)
+        if (t.isRestElement(element)) {
+          yield* variables(babel, element.argument)
+        } else if (t.isAssignmentPattern(element)) {
+          yield* variables(babel, element.left)
+        } else {
+          yield* variables(babel, element)
+        }
       }
     }
-  } else if (t.isRestElement(lval)) {
-    yield* variables(babel, lval.argument)
   } else if (t.isObjectPattern(lval)) {
     for (const property of lval.properties) {
-      if (t.isObjectProperty(property)) {
+      if (t.isRestElement(property)) {
+        yield* variables(babel, property.argument)
+      } else if (t.isObjectProperty(property)) {
         yield* variables(
           babel,
+          // Expression is not allowed in LVal
           /** @type {import('@babel/core').types.PatternLike} */(property.value)
         )
-      } else if (t.isRestElement(lval)) {
-        yield* variables(babel, lval.argument)
       }
     }
-  } else if (t.isAssignmentPattern(lval)) {
-    yield* variables(babel, lval.left)
   }
 }
 
