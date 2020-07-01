@@ -1,6 +1,6 @@
 {
   "name": "@xymopen/babel-plugin-auto-import",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Convert global variables to import statements",
   "keywords": [
     "babel-plugin",
