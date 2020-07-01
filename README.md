@@ -130,7 +130,7 @@ Suitable for injecting peer dependency.
 ```javascript
 @Component
 class MyComponent extends Vue {
-  @Prop() age!: number
+  @Prop() age
 }
 ```
 
@@ -144,7 +144,7 @@ import { Prop } from 'vue-property-decorator'
 
 @Component
 class MyComponent extends Vue {
-  @Prop() age!: number
+  @Prop() age
 }
 ```
 
