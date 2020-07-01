@@ -60,7 +60,7 @@ describe('Tests', () => {
 
   it('should not overwrite existing import', () => {
     const input = `
-      import someVariable from "some-path/some-module.js"
+      import someVariable from "some-path/other-module.js"
 
       someVariable
     `
@@ -68,13 +68,8 @@ describe('Tests', () => {
     const option = {
       someVariable: { from: 'some-path/some-module.js', default: true }
     }
-    const output = `
-      import someVariable from "some-path/some-module.js"
 
-      someVariable
-    `
-
-    assert.strictEqual(...isEqual(input, output, option))
+    assert.strictEqual(...isEqual(input, input, option))
   })
 
   it('should insert member import for global reference', () => {
