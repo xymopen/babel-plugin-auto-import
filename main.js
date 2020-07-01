@@ -63,8 +63,8 @@ function evaluate (babel, id, resolution) {
 
 /**
  * @param {import('@babel/core')} babel
- * @param {import('@babel/types').LVal} lval
- * @returns {IterableIterator<import('@babel/types').Identifier>}
+ * @param {import('@babel/core').types.LVal} lval
+ * @returns {IterableIterator<import('@babel/core').types.Identifier>}
  */
 function* variables (babel, lval) {
   const t = babel.types
@@ -84,7 +84,7 @@ function* variables (babel, lval) {
       if (t.isObjectProperty(property)) {
         yield* variables(
           babel,
-          /** @type {import('@babel/types').PatternLike} */(property.value)
+          /** @type {import('@babel/core').types.PatternLike} */(property.value)
         )
       } else if (t.isRestElement(lval)) {
         yield* variables(babel, lval.argument)
@@ -212,11 +212,11 @@ const plugin = function (babel) {
 
 /** @typedef {import('@babel/traverse').Scope} Scope */
 
-/** @typedef {import('@babel/traverse').NodePath<import('@babel/types').Program>} ProgramPath */
+/** @typedef {import('@babel/traverse').NodePath<import('@babel/core').types.Program>} ProgramPath */
 
-/** @typedef {import('@babel/types').Node} Node */
+/** @typedef {import('@babel/core').types.Node} Node */
 
-/** @typedef {import('@babel/types').ImportDeclaration} ImportDeclaration */
+/** @typedef {import('@babel/core').types.ImportDeclaration} ImportDeclaration */
 
 /**
  * @template S
