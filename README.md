@@ -6,7 +6,7 @@ This is an replacement for [babel-plugin-auto-import](https://github.com/PavelDy
 
 ## Known differences
 
-This plugin fails test case 14 where it transforms...
+This plugin fails test `should insert import for object property` where it transforms...
 
 ```javascript
 let a = {

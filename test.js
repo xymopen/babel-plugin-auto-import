@@ -41,7 +41,7 @@ function isEqual (input, expected, pluginOption, transformOption) {
 }
 
 describe('Tests', () => {
-  it('case 1', () => {
+  it('should insert default import for global reference', () => {
     const input = `
       someVariable
     `
@@ -58,7 +58,7 @@ describe('Tests', () => {
     assert.strictEqual(...isEqual(input, output, option))
   })
 
-  it('case 2', () => {
+  it('should not overwrite existing import', () => {
     const input = `
       import someVariable from "some-path/some-module.js"
 
@@ -77,7 +77,7 @@ describe('Tests', () => {
     assert.strictEqual(...isEqual(input, output, option))
   })
 
-  it('case 3', () => {
+  it('should insert member import for global reference', () => {
     const input = `
       someVariable
     `
@@ -94,7 +94,7 @@ describe('Tests', () => {
     assert.strictEqual(...isEqual(input, output, option))
   })
 
-  it('case 4', () => {
+  it('should insert import for assigment right value access in function', () => {
     const input = `
       import z from "some-path/y.js"
 
@@ -140,7 +140,7 @@ describe('Tests', () => {
     assert.strictEqual(...isEqual(input, output, option))
   })
 
-  it('case 5', () => {
+  it('should not insert import for global variable', () => {
     const input = `
       let someVariable
     `
@@ -155,7 +155,7 @@ describe('Tests', () => {
     assert.strictEqual(...isEqual(input, output, option))
   })
 
-  it('case 6', () => {
+  it('should not insert import for local variable', () => {
     const input = `
       import { q } from "some-path"
 
@@ -203,7 +203,7 @@ describe('Tests', () => {
     assert.strictEqual(...isEqual(input, output, option))
   })
 
-  it('case 7', () => {
+  it('should not insert import for property access', () => {
     const input = `
       x.y.z
     `
@@ -222,7 +222,7 @@ describe('Tests', () => {
     assert.strictEqual(...isEqual(input, output, option))
   })
 
-  it('case 8', () => {
+  it('should insert import for assigment right value access in globe', () => {
     const input = `
       let a = x.b()
       let c = d.b()
@@ -241,7 +241,7 @@ describe('Tests', () => {
     assert.strictEqual(...isEqual(input, output, option))
   })
 
-  it('case 9', () => {
+  it('should not insert import for label', () => {
     const input = `
       x:
       for (let i = 0; i < 10; i++) {
@@ -263,7 +263,7 @@ describe('Tests', () => {
     assert.strictEqual(...isEqual(input, output, option))
   })
 
-  it('case 10', () => {
+  it('should not insert import for class declaration', () => {
     const input = `
       try {
         class x {
@@ -285,7 +285,7 @@ describe('Tests', () => {
     assert.strictEqual(...isEqual(input, output, option))
   })
 
-  it('case 11', () => {
+  it('should not insert import for function declaration', () => {
     const input = `
       function x () { }
 
@@ -305,7 +305,7 @@ describe('Tests', () => {
     assert.strictEqual(...isEqual(input, output, option))
   })
 
-  it('case 12', () => {
+  it('should insert import for destruction', () => {
     const input = `
       ({ x } = a);
 
@@ -322,7 +322,7 @@ describe('Tests', () => {
     assert.strictEqual(...isEqual(input, output, option))
   })
 
-  it('case 13', () => {
+  it('should insert import for export declaration', () => {
     const input = `
       export default x
     `
@@ -339,7 +339,7 @@ describe('Tests', () => {
     assert.strictEqual(...isEqual(input, output, option))
   })
 
-  it('case 14', () => {
+  it('should insert import for object property', () => {
     const input = `
       let a = {
         b: x,
@@ -366,7 +366,7 @@ describe('Tests', () => {
     assert.strictEqual(...isEqual(input, output, option))
   })
 
-  it('case 15', () => {
+  it('should insert import for IIFE', () => {
     const input = `
       (function () {
         let a = x
@@ -389,7 +389,7 @@ describe('Tests', () => {
     assert.strictEqual(...isEqual(input, output, option))
   })
 
-  it('case 16', () => {
+  it('should not insert import for binary expression', () => {
     const input = `
       let a = b + x
     `
@@ -406,7 +406,7 @@ describe('Tests', () => {
     assert.strictEqual(...isEqual(input, output, option))
   })
 
-  it('case 17', () => {
+  it('should insert import for conditional expression', () => {
     const input = `
       let a = x ? y : z
     `
@@ -427,7 +427,7 @@ describe('Tests', () => {
     assert.strictEqual(...isEqual(input, output, option))
   })
 
-  it('case 18', () => {
+  it('should insert import for arrow function expr, call expr and if stat', () => {
     const input = `
       let a = b => x
 
@@ -456,7 +456,7 @@ describe('Tests', () => {
     assert.strictEqual(...isEqual(input, output, option))
   })
 
-  it('case 19', () => {
+  it('should insert import for for stat', () => {
     const input = `
       for (let a in x) { }
 
@@ -481,7 +481,7 @@ describe('Tests', () => {
     assert.strictEqual(...isEqual(input, output, option))
   })
 
-  it('case 20', () => {
+  it('should insert import for new stat', () => {
     const input = `
       new x
       new a.y()
@@ -505,7 +505,7 @@ describe('Tests', () => {
     assert.strictEqual(...isEqual(input, output, option))
   })
 
-  it('case 21', () => {
+  it('should insert import for return stat, tagged template expr and switch stat', () => {
     const input = `
       function a () {
         return x
@@ -538,7 +538,7 @@ describe('Tests', () => {
     assert.strictEqual(...isEqual(input, output, option))
   })
 
-  it('case 22', () => {
+  it('should insert import for throw stat and unary expr', () => {
     const input = `
       throw x
       +y
@@ -560,7 +560,7 @@ describe('Tests', () => {
     assert.strictEqual(...isEqual(input, output, option))
   })
 
-  it('case 23', () => {
+  it('should insert import for super class reference', () => {
     const input = `
       class A extends X { }
 
@@ -583,7 +583,7 @@ describe('Tests', () => {
     assert.strictEqual(...isEqual(input, output, option))
   })
 
-  it('case 24', () => {
+  it('should support side effect import', () => {
     const input = `
       someVariable
     `
@@ -600,7 +600,7 @@ describe('Tests', () => {
     assert.strictEqual(...isEqual(input, output, option))
   })
 
-  it('case 25', () => {
+  it('should not duplicate side effect import', () => {
     const input = `
       let x = a + b
     `
@@ -618,7 +618,7 @@ describe('Tests', () => {
     assert.strictEqual(...isEqual(input, output, option))
   })
 
-  it('case 26', () => {
+  it('should support callback config 1', () => {
     const input = `
       styles.className
     `
@@ -642,7 +642,7 @@ describe('Tests', () => {
     }))
   })
 
-  it('case 27', () => {
+  it('should support callback config 2', () => {
     const input = `
       styles.className
     `
@@ -666,7 +666,7 @@ describe('Tests', () => {
     }))
   })
 
-  it('case 28', () => {
+  it('should support factory config', () => {
     const input = `
       someVariable
     `
