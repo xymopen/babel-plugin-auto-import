@@ -22,7 +22,7 @@
     "url": "github:xymopen/babel-plugin-auto-import"
   },
   "scripts": {
-    "lint": "tsc --build tsconfig.json && eslint -c .eslintrc.json *.js",
+    "lint": "eslint -c .eslintrc.json *.js && tsc --noEmit --project tsconfig.json",
     "test": "nyc --reporter=text --reporter=html mocha"
   },
   "devDependencies": {
